@@ -25,7 +25,7 @@ Route | Method | Description
 
 Aggregate routes need to support optional “**dt_start**” and “**dt_end**” arguments that contain thestart and end time on which aggregations will referee, the app will consider only log linesbetween that data range. 
 
-Datetime will be in the format: “**YYYY-MM-DD HH:MM:SS**” (default MySQL DATETIME format)
+Datetime will be in the format: “**YYYY-MM-DD HH:MM:SS**”
 
 ---
 

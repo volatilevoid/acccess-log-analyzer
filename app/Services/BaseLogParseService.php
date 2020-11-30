@@ -37,7 +37,9 @@ abstract class BaseLogParseService
     protected function parseLogLine(string $line, int $logID)
     {
         $lineArray = explode(' ', $line);
-
+        if(!isset($lineArray[3])) {
+            $debug = 1;
+        }
         $ip = $lineArray[0];
         $dateTimeString = str_replace('[', '', $lineArray[3]);
         $dateTime = DateTime::createFromFormat($this->logDateTimeFormat, $dateTimeString);

@@ -120,7 +120,12 @@ class GzLogParseService extends BaseLogParseService implements LogParserInterfac
         gzclose($zp);
         // Dev
         $totalTime = microtime(true) - $t1;
-
+        
+        /**
+         * Refresh model in order to get upload_time
+         */
+        $log->refresh();
+        
         return [
             'name' => $log->name,
             'upload_time' => $log->upload_time

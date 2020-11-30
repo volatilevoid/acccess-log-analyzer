@@ -36,7 +36,7 @@ class AccessLogController extends Controller
          */
         $rules = [
             'name' => 'required|string',
-            'file' => 'required|mimetypes:application/gzip,txt|max:100000'
+            'file' => 'required|mimetypes:application/gzip,text/plain|max:100000'
         ];
 
         /**
