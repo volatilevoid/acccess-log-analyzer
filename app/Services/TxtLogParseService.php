@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\LogParserInterface;
 use App\Models\AccessLog;
 use App\Models\AccessLogEntry;
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 class TxtLogParseService extends BaseLogParseService implements LogParserInterface
@@ -61,9 +62,15 @@ class TxtLogParseService extends BaseLogParseService implements LogParserInterfa
         }
 
         while(!feof($fp)) {
-            $lineData = $this->parseLogLine(fgets($fp), $log->id);
+            try {
+                $lineData = $this->parseLogLine(fgets($fp), $log->id);
+            }
+            catch(Exception $e) {
+                $log->delete();
+                return $e->getMessage();
+            }
             /**
-             * Check if error string
+             * Log error string
              */
             if(is_string($lineData)) {
                 Log::warning($lineData . ' in log: ' . $fileName);
@@ -100,7 +107,7 @@ class TxtLogParseService extends BaseLogParseService implements LogParserInterfa
          * Refresh model in order to get upload_time
          */
         $log->refresh();
-        
+
         return [
             'name' => $log->name,
             'upload_time' => $log->upload_time

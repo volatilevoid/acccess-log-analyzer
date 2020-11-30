@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\LogParserInterface;
 use App\Models\AccessLog;
 use App\Models\AccessLogEntry;
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 class GzLogParseService extends BaseLogParseService implements LogParserInterface
@@ -80,15 +81,20 @@ class GzLogParseService extends BaseLogParseService implements LogParserInterfac
          * Parse each log line
          */
         while(!gzeof($zp)) {
-            $lineData = $this->parseLogLine(gzgets($zp), $log->id);
+            try {
+                $lineData = $this->parseLogLine(gzgets($zp), $log->id);
+            }
+            catch(Exception $e) {
+                $log->delete();
+                return $e->getMessage();
+            }
             /**
-             * Check if error string
+             * Log error string
              */
             if(is_string($lineData)) {
                 Log::warning($lineData . ' in log: ' . $fileName);
                 continue;
             }
-
             array_push($buffer, $lineData);
             $counter++;
             

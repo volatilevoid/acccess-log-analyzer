@@ -17,8 +17,8 @@ class CreateAccessLogEntriesTable extends Migration
             $table->id();
             $table->foreignId('access_log_id');
             $table->string('ip_address', 15);
-            $table->string('http_method', 10);
-            $table->string('url', 2000);
+            $table->string('http_method', 7);
+            $table->string('url', 1000);
             $table->dateTime('request_datetime');
         });
     }
