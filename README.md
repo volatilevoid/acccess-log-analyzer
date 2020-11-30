@@ -6,8 +6,11 @@ As a server administrator, I would like to have the ability to aggregate web ser
 
 Log line example: 
 
-> 122.148.162.36 - - [26/Nov/2020:11:06:48 +0000] "GET /click?trvid=10004&trvx=e970dafb&var1=19287402013795679&var2=22928674 HTTP/2.0" 302 177 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36" "kesimon.com" 0.008 0.008 
+ `122.148.162.36 - - [26/Nov/2020:11:06:48 +0000] "GET /click?trvid=10004&trvx=e970dafb&var1=19287402013795679&var2=22928674 HTTP/2.0" 302 177 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36" "kesimon.com" 0.008 0.008`
 
+Log line format:
+
+`client_ip client_identity(or "-") user(or "-") date_and_time_of_request request_type+resorce_being_requested HTTP_response_status_code size_of_object_returned_to_client request_resource_origin(or "-") user_agent`
 ## Routes
 
 Route | Method | Description
@@ -22,4 +25,14 @@ Route | Method | Description
 
 Aggregate routes need to support optional “**dt_start**” and “**dt_end**” arguments that contain thestart and end time on which aggregations will referee, the app will consider only log linesbetween that data range. 
 
-Datetime will be in the format: “**YYYY-MM-DD HH:MM:SS**”
+Datetime will be in the format: “**YYYY-MM-DD HH:MM:SS**” (default MySQL DATETIME format)
+
+---
+
+## Warning
+
+Make sure that server is configured to accept content larger than 100MB. The configuration is done in php.ini (or .htaccess) by setting the proper values of the following variables:
+
+- upload_max_filesize
+- post_max_size
+
