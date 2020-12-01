@@ -22,7 +22,6 @@ class TxtLogParseService extends BaseLogParseService implements LogParserInterfa
 
     public function parse(string $filePath, string $logName)
     {
-        $t1 = microtime(true);
         // Remove limit on max execution time
         \set_time_limit(0);
         // Set entries counter

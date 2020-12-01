@@ -19,9 +19,9 @@ Route | Method | Description
 /log | POST | Upload log file (plain txt or gzipped)
 /log/[name] | DELETE | Delete uploaded log
 /log/[name] | GET | Download uploaded log
-/aggregate/ip | GET | Aggregated by IP
-/aggregate/method | GET | Aggregated by HTTP method
-/aggregate/url | GET | Aggregate by URL (without GET arguments)
+/aggregate/ip/[name] | GET | Aggregated by IP
+/aggregate/method/[name] | GET | Aggregated by HTTP method
+/aggregate/url/[name] | GET | Aggregate by URL (without GET arguments)
 
 Aggregate routes need to support optional “**dt_start**” and “**dt_end**” arguments that contain thestart and end time on which aggregations will referee, the app will consider only log linesbetween that data range. 
 

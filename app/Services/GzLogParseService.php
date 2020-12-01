@@ -74,7 +74,7 @@ class GzLogParseService extends BaseLogParseService implements LogParserInterfac
             $counter++;
             // Buffer is full
             if($counter === $maxEntries) {
-                $chunks = array_chunk($buffer, 1000);
+                $chunks = array_chunk($buffer, 2000);
                 unset($buffer);
                 $buffer = [];
                 foreach($chunks as $entriesChunk) {
