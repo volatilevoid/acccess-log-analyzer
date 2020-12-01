@@ -22,5 +22,10 @@ Route::delete('log/{name}', [AccessLogController::class, 'destroy']);
 
 Route::get('log/{name}', [AccessLogController::class, 'download']);
 
-Route::get('aggregate/{byCondition}', [AccessLogController::class, 'aggregateBy']);
+Route::get('aggregate/{byCondition}/{name?}', [AccessLogController::class, 'aggregateBy']);
 
+Route::fallback(function() {
+    return response()->json([
+        'error_msg' => 'Invalid resource'
+    ], 404);
+});

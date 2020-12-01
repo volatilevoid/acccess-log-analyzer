@@ -8,6 +8,11 @@ use Carbon\Carbon;
 use DateTime;
 use Illuminate\Support\Facades\DB;
 
+use function GuzzleHttp\Promise\queue;
+
+/**
+ * Service class for communication with database
+ */
 class AccessLogDataService
 {
     /**
@@ -30,9 +35,9 @@ class AccessLogDataService
     {
         $result = AccessLog::where('name', $name)->get();
         if($result->isEmpty()) {
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
@@ -56,10 +61,13 @@ class AccessLogDataService
      * @param string $name
      * @return void
      */
-    public function deleteLogByName(string $name)
+    public function deleteByName(string $name)
     {
         // Fetch log data
         $log = AccessLog::where('name', $name)->first();
+        // Disable log entries for reading
+        $log->is_enabled = false;
+        $log->save();
         // Delete all entries 
         AccessLogEntry::where('access_log_id', $log->id)->delete();
         // Delete log
@@ -73,11 +81,12 @@ class AccessLogDataService
      * from given timespan
      *
      * @param string $aggregateBy 
+     * @param string $name 
      * @param string $startDateTimeString
      * @param string $endDateTimeString
      * @return string aggregatedData
      */
-    public function getAggregate(string $aggregateBy, string $startDateTimeString, string $endDateTimeString): string
+    public function getAggregate(string $aggregateBy, string $name, string $startDateTimeString, string $endDateTimeString): string
     {
         $dateTimeFormat = 'Y-m-d H:i:s';
         // Convert parameter to column label
@@ -92,24 +101,57 @@ class AccessLogDataService
             'url' => 'url',
             'method' => 'method'
         ];
+
         // Begin querry
-        $query = DB::table('access_log_entries');
-        // Add query start time condition if valid
-        if($startDateTimeString !== '') {
+        $query = DB::table('access_log_entries as ale')
+                        ->join('access_logs as al', 'ale.access_log_id', '=', 'al.id')
+                        ->where('al.is_enabled', '=', true);
+
+        // Return aggregate from all logs if log name not specified
+        if($name !== '') {
+            $log = AccessLog::where('name', $name)
+            ->where('is_enabled', true)
+            ->first();
+            // Add query log name condition
+            if($log && $log->is_enabled) {
+                $query = $query->where('ale.access_log_id', '=', $log->id);
+            }
+
+        }
+
+        // Time span. Prevent double where date "where" condition
+        if($startDateTimeString !== '' && $endDateTimeString !== '') {
             $startDateTime = Carbon::createFromFormat($dateTimeFormat, $startDateTimeString);
-            if($startDateTime !== false) {
-                $query = $query->whereDate('request_datetime', '>', $startDateTime);
-            }
-        }
-        // Add query end time condition if valid
-        if($endDateTimeString !== '') {
             $endDateTime = Carbon::createFromFormat($dateTimeFormat, $endDateTimeString);
+            $query = $query->whereDate('ale.request_datetime', '=', $startDateTime->toDateString());
+            if($startDateTime !== false) {
+                $query = $query->whereTime('ale.request_datetime', '>=', $startDateTime->toTimeString());
+            }
             if($endDateTime !== false) {
-                $query = $query->whereDate('request_datetime', '<', $endDateTime);
+                $query = $query->whereTime('ale.request_datetime', '<=', $endDateTime->toTimeString());
             }
         }
-        $query = $query->select($toColumnLabel[$aggregateBy] . ' as ' . $toAlias[$aggregateBy], DB::raw('COUNT(id) as cnt'))
-                    ->groupBy($aggregateBy);
+        // Only one of the datetime conditions
+        else {
+            // Add query start time condition
+            if($startDateTimeString !== '') {
+                $startDateTime = Carbon::createFromFormat($dateTimeFormat, $startDateTimeString);
+                if($startDateTime !== false) {
+                    $query = $query->whereDate('ale.request_datetime', '=', $startDateTime->toDateString())
+                                        ->whereTime('ale.request_datetime', '>=', $startDateTime->toTimeString());
+                }
+            }
+            // Add query end time condition
+            if($endDateTimeString !== '') {
+                $endDateTime = Carbon::createFromFormat($dateTimeFormat, $endDateTimeString);
+                if($endDateTime !== false) {
+                    $query = $query->whereDate('ale.request_datetime', '=', $endDateTime->toDateString())
+                                        ->whereTime('ale.request_datetime', '<=', $endDateTime->toTimeString());
+                }
+            }
+        }
+        $query = $query->select($toColumnLabel[$aggregateBy] . ' as ' . $toAlias[$aggregateBy], DB::raw('COUNT(ale.id) as cnt'))
+        ->groupBy($aggregateBy);
 
         return $query->get()->toJson();
     }

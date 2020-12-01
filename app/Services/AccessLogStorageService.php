@@ -5,6 +5,9 @@ namespace App\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Service class for communication with filesystem
+ */
 class AccessLogStorageService
 {
     private string $logsFolder = 'access_logs';
@@ -17,7 +20,7 @@ class AccessLogStorageService
     public function delete(string $fileName): bool
     {
         if(Storage::disk('local')->exists("{$this->logsFolder}/{$fileName}")) {
-            return Storage::disk('locale')->delete("{$this->logsFolder}/{$fileName}");
+            return Storage::disk('local')->delete("{$this->logsFolder}/{$fileName}");
         }
         return true;
     }

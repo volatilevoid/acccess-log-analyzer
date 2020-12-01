@@ -105,6 +105,12 @@ class AccessLogController extends Controller
         return response()->json($status, 200);
     }
 
+    /**
+     * Delete log
+     *
+     * @param string $name
+     * @return void
+     */
     public function destroy(string $name)
     {
         $validator = Validator::make([
@@ -121,12 +127,28 @@ class AccessLogController extends Controller
         
         $fileName = $this->logDataService->getFilename($name);
 
-        if($this->fileStorageService->delete($fileName) === false) {
-            // TODO problem deleting or file missing
+        if($fileName === false) {
+            return response()->json([
+                'error_msg' => 'Log with specific name missing from DB'
+            ], 404);  
         }
 
+        if($this->fileStorageService->delete($fileName) === false) {
+            return response()->json([
+                'error_msg' => 'Problem removing ' . $fileName . ' from filesystem'
+            ], 500);  
+        }
+        
+
+        $this->logDataService->deleteByName($name);
     }
 
+    /**
+     * Download log
+     *
+     * @param string $name
+     * @return void
+     */
     public function download(string $name)
     {
         $validator = Validator::make([
@@ -140,18 +162,18 @@ class AccessLogController extends Controller
                 'error_msg' => $validator->errors()->first()
             ], 400);  
         }
-
+        // Get storage file name
         $fileName = $this->logDataService->getFilename($name);
         if($fileName === false) {
             return response()->json([
                 'error_msg' => 'Log with specific name doesn’t exist'
-            ], 400);  
+            ], 404);  
         }
-
+        // Check file system if file present
         if(!$this->fileStorageService->isFilePresent($fileName)) {
             return response()->json([
                 'error_msg' => 'File missing from file system'
-            ], 400);  
+            ], 404);  
         }
 
         return response()->download($this->fileStorageService->getFilePath($fileName));
@@ -165,17 +187,26 @@ class AccessLogController extends Controller
      *
      * @param Request $request GET request with optional parameters
      * @param string $byCondition GET request parameter. Aggregate by ip | url | method
+     * @param string $name name of access log 
      * @return string $response Aggregated data
      */
-    public function aggregateBy(Request $request, string $byCondition)
+    public function aggregateBy(Request $request, string $byCondition, string $name = '')
     {
         // Aggregate by route parameter possible
         $availableAggregations = ['ip', 'url', 'method'];
         if(!in_array($byCondition, $availableAggregations, true)) {
             return response()->json([
-                'error_msg' => 'Group by "' . $byCondition . '" is not available'
+                'error_msg' => 'Aggregate by "' . $byCondition . '" is not available'
             ], 400);
         }
+
+        // Log with "name" exists
+        if(!empty($name) && $this->logDataService->isNameAvailable($name)) {
+            return response()->json([
+                'error_msg' => 'Log with name: "' . $name . '" doesn\'t exist'
+            ], 400);
+        }
+
         // Validation rules
         $rules = [
             'dt_start' => 'string|date_format:Y-m-d H:i:s',
@@ -192,6 +223,6 @@ class AccessLogController extends Controller
         $dateTimeStart = isset($request->dt_start) ? $request->dt_start : '';
         $dateTimeEnd = isset($request->dt_end) ? $request->dt_end : '';
 
-        return response($this->logDataService->getAggregate($byCondition, $dateTimeStart, $dateTimeEnd));
+        return response($this->logDataService->getAggregate($byCondition, $name, $dateTimeStart, $dateTimeEnd));
     }
 }

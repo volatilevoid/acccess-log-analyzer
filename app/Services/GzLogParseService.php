@@ -8,17 +8,18 @@ use App\Models\AccessLogEntry;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Parse .gz log line
+ */
 class GzLogParseService extends BaseLogParseService implements LogParserInterface
 {
-
-
     public function __construct(AccessLogStorageService $alss)
     {
         parent::__construct($alss);
     }
 
     /**
-     * Parse compressed log file
+     * Parse compressed log file's line
      * 
      * Process and presist each log entry
      *
@@ -40,6 +41,7 @@ class GzLogParseService extends BaseLogParseService implements LogParserInterfac
         $log->name = $logName;
         $log->file_name = $fileName;
         $log->size = $this->storageService->getFileSize($fileName);
+        $log->is_enabled = false;
         $logSaveSuccess = $log->save();
         // Remove log file from filesystem if unable to persist it's info
         if(!$logSaveSuccess) {
@@ -59,6 +61,7 @@ class GzLogParseService extends BaseLogParseService implements LogParserInterfac
             }
             catch(Exception $e) {
                 $log->delete();
+                $this->storageService->delete($fileName);
                 return $e->getMessage();
             }
             // Log error string
@@ -82,7 +85,7 @@ class GzLogParseService extends BaseLogParseService implements LogParserInterfac
         }
         // Document end. Check if buffer not empty
         if(isset($buffer[0])) {
-            $chunks = array_chunk($buffer, 1000);
+            $chunks = array_chunk($buffer, 2000);
             unset($buffer);
             $buffer = [];
             foreach($chunks as $entriesChunk) {
@@ -91,8 +94,9 @@ class GzLogParseService extends BaseLogParseService implements LogParserInterfac
         }
         // Close file handle
         gzclose($zp);
-        // Refresh model in order to get upload_time
-        $log->refresh();
+        // Enable log for reading
+        $log->is_enabled = true;
+        $log->save();
         
         return [
             'name' => $log->name,

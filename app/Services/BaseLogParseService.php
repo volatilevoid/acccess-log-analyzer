@@ -5,6 +5,9 @@ namespace App\Services;
 use DateTime;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * Common log parsing functinalities
+ */
 abstract class BaseLogParseService
 {
     protected AccessLogStorageService $storageService;
@@ -69,15 +72,26 @@ abstract class BaseLogParseService
         return $logEntry;
 
     }
-
+    /**
+     * Remove leading slash character from url
+     *
+     * @param string $urlWithLeadingSlash
+     * @return string
+     */
     protected function urlWithoutLeadingSlash(string $urlWithLeadingSlash): string
     {
-        if($urlWithLeadingSlash[0] === '/') {
+        if($urlWithLeadingSlash[0] !== '/') {
             return $urlWithLeadingSlash;
         }
         return substr($urlWithLeadingSlash, 1);
     }
 
+    /**
+     * Check if valid HTTP verb
+     *
+     * @param string $method
+     * @return boolean
+     */
     private function isMethodValid(string $method)
     {
         return in_array($method, $this->httpMethods, true);

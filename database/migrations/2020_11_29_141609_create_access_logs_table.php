@@ -19,6 +19,7 @@ class CreateAccessLogsTable extends Migration
             $table->string('file_name');
             $table->integer('size')->unsigned();
             $table->timestamp('upload_time')->useCurrent();
+            $table->boolean('is_enabled');
         });
     }
 

@@ -11,15 +11,19 @@ class AccessLog extends Model
 
     /**
      * Disable timestamps
-     *
-     * @var boolean
      */
     public $timestamps = false;
 
     /**
      * All attributes are mass assignable
-     *
-     * @var array
      */
     protected $guarded = [];
+
+    /**
+     * Get log entries
+     */
+    public function entries()
+    {
+        return $this->hasMany('App\Models\AccessLogEntry');
+    }
 }
