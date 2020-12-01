@@ -22,8 +22,8 @@ class AccessLogController extends Controller
     }
 
     /**
-     * List of all logs
-     *
+     * Get list of available uploaded logs
+     * 
      * @return void
      */
     public function index()
@@ -32,7 +32,10 @@ class AccessLogController extends Controller
     }
 
     /**
-     * Upload and process access log file
+     * Post access log file
+     * 
+     * Client must specify unique name by which log will be referenced.
+     * Accept .gz amd .txt file formats
      * 
      * @param Request $request
      * @return string JSON Response
@@ -113,7 +116,7 @@ class AccessLogController extends Controller
         if($validator->fails()) {
             return response()->json([
                 'error_msg' => $validator->errors()->first()
-            ], 500);  
+            ], 400);  
         }
         
         $fileName = $this->logDataService->getFilename($name);
@@ -124,11 +127,46 @@ class AccessLogController extends Controller
 
     }
 
-    public function download()
+    public function download(string $name)
     {
-        # code...
+        $validator = Validator::make([
+            'name' => $name
+        ], [
+            'name' => 'required|string'
+        ]);
+
+        if($validator->fails()) {
+            return response()->json([
+                'error_msg' => $validator->errors()->first()
+            ], 400);  
+        }
+
+        $fileName = $this->logDataService->getFilename($name);
+        if($fileName === false) {
+            return response()->json([
+                'error_msg' => 'Log with specific name doesn’t exist'
+            ], 400);  
+        }
+
+        if(!$this->fileStorageService->isFilePresent($fileName)) {
+            return response()->json([
+                'error_msg' => 'File missing from file system'
+            ], 400);  
+        }
+
+        return response()->download($this->fileStorageService->getFilePath($fileName));
     }
 
+    /**
+     * Get aggregated data
+     * 
+     * Returns web server's access log aggregated data by one of permitted conditions.
+     * Filter results by log entry time of request with optional parameters "dt_start" and "dt_end" 
+     *
+     * @param Request $request GET request with optional parameters
+     * @param string $byCondition GET request parameter. Aggregate by ip | url | method
+     * @return string $response Aggregated data
+     */
     public function aggregateBy(Request $request, string $byCondition)
     {
         // Aggregate by route parameter possible
@@ -143,17 +181,17 @@ class AccessLogController extends Controller
             'dt_start' => 'string|date_format:Y-m-d H:i:s',
             'dt_end' => 'string|date_format:Y-m-d H:i:s'
         ];
-
+        // Check parameters validity
         $validator = Validator::make($request->all(), $rules);
         if($validator->fails()) {
             return response()->json([
                 'error_msg' => $validator->errors()->first()
             ], 400);
         }
-
+        // Set missing parameters to empty string in order to pass values to service
         $dateTimeStart = isset($request->dt_start) ? $request->dt_start : '';
         $dateTimeEnd = isset($request->dt_end) ? $request->dt_end : '';
 
-        return $this->logDataService->getAggregate($byCondition, $dateTimeStart, $dateTimeEnd);
+        return response($this->logDataService->getAggregate($byCondition, $dateTimeStart, $dateTimeEnd));
     }
 }

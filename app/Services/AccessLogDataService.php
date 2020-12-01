@@ -39,11 +39,15 @@ class AccessLogDataService
      * Get file name from log label
      * 
      * @param string $name
-     * @return string $fileName
+     * @return string|bool $fileName|false
      */
-    public function getFilename(string $name): string
+    public function getFilename(string $name)
     {
-        return AccessLog::where('name', $name)->first('file_name')->toArray()['file_name'];
+        $fileName = AccessLog::where('name', $name)->first('file_name')->toArray();
+        if(isset($fileName)) {
+            return $fileName['file_name'];
+        }
+        return false;
     }
 
     /**

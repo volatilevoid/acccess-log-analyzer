@@ -14,7 +14,7 @@ class AccessLogStorageService
         return Storage::putFileAs($this->logsFolder, $file, $file->getClientOriginalName());
     }
 
-    public function delete(string $fileName)
+    public function delete(string $fileName): bool
     {
         if(Storage::disk('local')->exists("{$this->logsFolder}/{$fileName}")) {
             return Storage::disk('locale')->delete("{$this->logsFolder}/{$fileName}");

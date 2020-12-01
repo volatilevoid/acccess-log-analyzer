@@ -16,9 +16,9 @@ class CreateAccessLogEntriesTable extends Migration
         Schema::create('access_log_entries', function (Blueprint $table) {
             $table->id();
             $table->foreignId('access_log_id');
-            $table->string('ip_address', 15);
-            $table->string('http_method', 7);
-            $table->string('url', 1000);
+            $table->string('ip_address', 15)->index();
+            $table->string('http_method', 7)->index();
+            $table->string('url', 1000)->index();
             $table->dateTime('request_datetime');
         });
     }

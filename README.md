@@ -31,7 +31,7 @@ Datetime will be in the format: “**YYYY-MM-DD HH:MM:SS**”
 
 ## Warning
 
-Make sure that server is configured to accept content larger than 100MB. The configuration is done in php.ini (or .htaccess) by setting the proper values of the following variables:
+Make sure that php.ini is configured to accept content larger than 100MB by setting the proper values of the following variables:
 
 - upload_max_filesize
 - post_max_size
