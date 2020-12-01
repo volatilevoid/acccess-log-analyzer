@@ -16,7 +16,7 @@ class CreateAccessLogsTable extends Migration
         Schema::create('access_logs', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('file_name');
+            $table->string('file_path', 500);
             $table->integer('size')->unsigned();
             $table->timestamp('upload_time')->useCurrent();
             $table->boolean('is_enabled');

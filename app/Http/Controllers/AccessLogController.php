@@ -64,15 +64,6 @@ class AccessLogController extends Controller
             ], 400);
         }
 
-        $fileName = $request->file('file')->getClientOriginalName();
-
-        // Check for file name duplicate
-        if($this->fileStorageService->isFilePresent($fileName)) {
-            return response()->json([
-                'error_msg' => "File with name: \"{$fileName}\" already exists"
-            ], 400);
-        }
-
         // Check if log name is available
         if(!$this->logDataService->isNameAvailable($request->name)) {
             return response()->json([
@@ -92,7 +83,7 @@ class AccessLogController extends Controller
 
         // Parse uploaded access log file and persist parsed data
         $status = $this->processLogService->handle(
-            $fileName, 
+            $storedFilePath, 
             $request->name
         );
 
@@ -125,17 +116,17 @@ class AccessLogController extends Controller
             ], 400);  
         }
         
-        $fileName = $this->logDataService->getFilename($name);
+        $filePath = $this->logDataService->getFilePath($name);
 
-        if($fileName === false) {
+        if($filePath === false) {
             return response()->json([
                 'error_msg' => 'Log with specific name missing from DB'
             ], 404);  
         }
 
-        if($this->fileStorageService->delete($fileName) === false) {
+        if($this->fileStorageService->delete($filePath) === false) {
             return response()->json([
-                'error_msg' => 'Problem removing ' . $fileName . ' from filesystem'
+                'error_msg' => 'Problem removing ' . $name . ' from filesystem'
             ], 500);  
         }
         
@@ -163,20 +154,23 @@ class AccessLogController extends Controller
             ], 400);  
         }
         // Get storage file name
-        $fileName = $this->logDataService->getFilename($name);
-        if($fileName === false) {
+        $filePath = $this->logDataService->getFilePath($name);
+        if($filePath === false) {
             return response()->json([
                 'error_msg' => 'Log with specific name doesn’t exist'
             ], 404);  
         }
         // Check file system if file present
-        if(!$this->fileStorageService->isFilePresent($fileName)) {
+        if(!$this->fileStorageService->isFilePresent($filePath)) {
             return response()->json([
                 'error_msg' => 'File missing from file system'
             ], 404);  
         }
 
-        return response()->download($this->fileStorageService->getFilePath($fileName));
+        $filePathArray = explode('.', $filePath);
+        $extension = $filePathArray[count($filePathArray) - 1];
+
+        return response()->download($this->fileStorageService->getFullPath($filePath), $name . '.' . $extension);
     }
 
     /**

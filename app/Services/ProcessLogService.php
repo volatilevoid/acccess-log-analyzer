@@ -27,13 +27,13 @@ class ProcessLogService
     /**
      * Run log parser on file
      *
-     * @param string $fileName
+     * @param string $filePath
      * @param string $logName
      * @return void
      */
-    public function handle(string $fileName, string $logName)
+    public function handle(string $filePath, string $logName)
     {
-        $filePathArray = explode('.', $fileName);
+        $filePathArray = explode('.', $filePath);
         $extension = $filePathArray[count($filePathArray) - 1];
 
         if($extension === 'txt') {
@@ -46,6 +46,6 @@ class ProcessLogService
             return 'File not txt or gz';
         }
 
-        return $this->parser->parse($fileName, $logName);
+        return $this->parser->parse($filePath, $logName);
     }
 }

@@ -20,7 +20,7 @@ class TxtLogParseService extends BaseLogParseService implements LogParserInterfa
         parent::__construct($alss);
     }
 
-    public function parse(string $fileName, string $logName)
+    public function parse(string $filePath, string $logName)
     {
         $t1 = microtime(true);
         // Remove limit on max execution time
@@ -33,21 +33,21 @@ class TxtLogParseService extends BaseLogParseService implements LogParserInterfa
         // Save log file details in DB
         $log = new AccessLog();
         $log->name = $logName;
-        $log->file_name = $fileName;
-        $log->size = $this->storageService->getFileSize($fileName);
+        $log->file_path = $filePath;
+        $log->size = $this->storageService->getFileSize($filePath);
         // Disable log entries for reading until all are processed
         $log->is_enabled = false;
         $logSaveSuccess = $log->save();
         // Remove log file from filesystem if unable to persist it's info
         if(!$logSaveSuccess) {
-            $this->storageService->delete($fileName);
+            $this->storageService->delete($filePath);
             return 'Unable to store log file data in DB';
         }
         // Open file handle
-        $fp = fopen($this->storageService->getFilePath($fileName), "r");
+        $fp = fopen($this->storageService->getFullPath($filePath), "r");
         // Unable to read file
         if($fp === false) {
-            return 'Can\'t open ' . $fileName . ' for read';
+            return 'Can\'t open ' . $filePath . ' for read';
         }
         // Parse each log line
         while(!feof($fp)) {
@@ -56,12 +56,12 @@ class TxtLogParseService extends BaseLogParseService implements LogParserInterfa
             }
             catch(Exception $e) {
                 $log->delete();
-                $this->storageService->delete($fileName);
+                $this->storageService->delete($filePath);
                 return $e->getMessage();
             }
             // Log error string
             if(is_string($lineData)) {
-                Log::warning($lineData . ' in log: ' . $fileName);
+                Log::warning($lineData . ' in log: ' . $filePath);
                 continue;
             }
             // Buffer valid log entry
