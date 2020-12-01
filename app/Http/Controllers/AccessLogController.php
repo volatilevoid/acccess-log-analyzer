@@ -198,7 +198,7 @@ class AccessLogController extends Controller
         if(!empty($name) && $this->logDataService->isNameAvailable($name)) {
             return response()->json([
                 'error_msg' => 'Log with name: "' . $name . '" doesn\'t exist'
-            ], 400);
+            ], 404);
         }
 
         // Validation rules
