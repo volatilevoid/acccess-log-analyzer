@@ -15,7 +15,6 @@ class AccessLogStorageService
     public function store(UploadedFile $file)
     {
         return Storage::putFile($this->logsFolder, $file);
-        // return Storage::putFileAs($this->logsFolder, $file, $file->getClientOriginalName());
     }
 
     public function delete(string $filePath): bool
